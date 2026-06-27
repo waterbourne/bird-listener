@@ -17,10 +17,7 @@ fi
 
 sleep 1
 
-echo "🧹 Cleaning up data..."
+echo "🧹 Cleaning up audio chunks..."
 rm -rf audio_chunks/*
-rm -rf artwork/*
-rm -f detections.txt
-rm -f generated.json
 
-echo "✅ Stopped and cleaned"
+echo "✅ Stopped and cleaned (artwork preserved)"
