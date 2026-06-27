@@ -804,13 +804,18 @@
 
         // MODE 2: Polling (current implementation)
         let knownBirds = new Map(); // species -> {timestamp, has_artwork}
+        let isInitialLoad = true;
 
         async function pollForBirds() {
             try {
                 const response = await fetch('/api/birds');
                 const birds = await response.json();
 
-                birds.forEach(bird => {
+                // On initial load, birds are already sorted newest-first
+                // Process in reverse to preserve that order when using insertBefore
+                const birdList = isInitialLoad ? birds.reverse() : birds;
+
+                birdList.forEach(bird => {
                     const existing = knownBirds.get(bird.species);
                     const currentArtwork = bird.has_artwork || false;
                     
@@ -835,6 +840,8 @@
                         updateEntryImage(bird.species, bird.artwork_path);
                     }
                 });
+
+                isInitialLoad = false;
             } catch (err) {
                 console.error('Polling error:', err);
             }

@@ -328,7 +328,7 @@
                             </div>
                         `;
                         
-                        grid.appendChild(card);
+                        grid.insertBefore(card, grid.firstChild);
                     });
                 } else {
                     // Just update artwork for existing cards
