@@ -1,0 +1,29 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Project data
+audio_chunks/
+artwork/
+detections.txt
+generated.json
+*.wav
+*.mp3
+logs/
+.pids
+
+# Environment
+.env
+.DS_Store
+
+# Backups
+*.backup

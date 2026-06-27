@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soundscape – Birds Heard Today</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1520 50%, #0d1321 100%);
+            color: #e8e6e3;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Animated misty background */
+        .mist {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.4;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(88, 101, 242, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(162, 89, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(74, 222, 128, 0.06) 0%, transparent 50%);
+            animation: mistFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes mistFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(20px, -20px) scale(1.05); }
+        }
+
+        /* Whimsical Tree Container */
+        .tree-container {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: calc(100% - 420px);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+
+        #birdTree {
+            width: 100%;
+            max-width: 800px;
+            height: 100%;
+            filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.3));
+        }
+
+        /* Tree styling */
+        .tree-trunk {
+            fill: #4a3f35;
+            stroke: #3a2f25;
+            stroke-width: 2;
+        }
+
+        .tree-branch {
+            stroke: #5a4f45;
+            stroke-width: 3;
+            stroke-linecap: round;
+            fill: none;
+            opacity: 0.9;
+        }
+
+        .leaf-cluster {
+            fill: #4ade80;
+            opacity: 0.6;
+            animation: leafSway 4s ease-in-out infinite;
+        }
+
+        @keyframes leafSway {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            50% { transform: translateX(3px) rotate(2deg); }
+        }
+
+        /* Bird elements */
+        .bird-perch {
+            opacity: 0;
+            animation: birdAppear 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            transform-origin: center;
+        }
+
+        @keyframes birdAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0) translateY(-20px);
+            }
+            50% {
+                transform: scale(1.2) translateY(-5px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .bird-body {
+            animation: birdBob 2.5s ease-in-out infinite;
+        }
+
+        @keyframes birdBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .bird-label {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 14px;
+            font-weight: 400;
+            fill: #ffffff;
+            text-anchor: middle;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .bird-perch:hover .bird-label {
+            opacity: 1;
+        }
+
+        /* Glassmorphism sidebar */
+        .journal-sidebar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 420px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px 30px;
+            overflow-y: auto;
+            z-index: 10;
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .journal-header {
+            margin-bottom: 40px;
+        }
+
+        .journal-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2em;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff 0%, #a8b3cf 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .journal-subtitle {
+            font-size: 0.85em;
+            color: #9ca3af;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .journal-count {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3em;
+            font-weight: 600;
+            color: #4ade80;
+            margin-top: 20px;
+        }
+
+        /* Detection entries */
+        .detection-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .detection-entry {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            gap: 15px;
+        }
+
+        .detection-image {
+            flex-shrink: 0;
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .detection-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .detection-image.no-image {
+            font-size: 2em;
+            opacity: 0.3;
+        }
+
+        .detection-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detection-entry:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateX(-5px);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bird-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8em;
+            font-weight: 400;
+            margin-bottom: 6px;
+            color: #fff;
+        }
+
+        .scientific-name {
+            font-size: 0.9em;
+            font-style: italic;
+            color: #9ca3af;
+            margin-bottom: 12px;
+        }
+
+        .detection-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8em;
+            color: #6b7280;
+            margin-top: 12px;
+        }
+
+        .timestamp {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .confidence {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(74, 222, 128, 0.15);
+            border-radius: 20px;
+            color: #4ade80;
+            font-weight: 500;
+        }
+
+        /* Soundwave SVG animation */
+        .soundwave {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 30px;
+        }
+
+        .soundwave rect {
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        .soundwave rect:nth-child(1) { animation-delay: 0s; }
+        .soundwave rect:nth-child(2) { animation-delay: 0.15s; }
+        .soundwave rect:nth-child(3) { animation-delay: 0.3s; }
+        .soundwave rect:nth-child(4) { animation-delay: 0.45s; }
+        .soundwave rect:nth-child(5) { animation-delay: 0.6s; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scaleY(0.5); opacity: 0.4; }
+            50% { transform: scaleY(1); opacity: 1; }
+        }
+
+        /* Status indicator */
+        .status {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            z-index: 20;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: breathe 2s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 1; box-shadow: 0 0 10px rgba(74, 222, 128, 0.8); }
+            50% { opacity: 0.4; box-shadow: 0 0 5px rgba(74, 222, 128, 0.4); }
+        }
+
+        .status-text {
+            font-size: 0.9em;
+            color: #d1d5db;
+        }
+
+        /* Scrollbar styling */
+        .journal-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .journal-sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .journal-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .journal-sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+
+        .empty-hint {
+            font-size: 0.85em;
+            opacity: 0.6;
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="mist"></div>
+
+    <div class="tree-container">
+        <svg id="birdTree" viewBox="0 0 800 900" xmlns="http://www.w3.org/2000/svg">
+            <!-- Tree trunk -->
+            <path class="tree-trunk" d="M 380 900 Q 390 700, 395 550 Q 400 400, 400 250 Q 400 100, 405 0" />
+            
+            <!-- Main branches (predefined perch spots) -->
+            <!-- Lower left branch -->
+            <path class="tree-branch" d="M 395 750 Q 300 720, 220 700" id="branch1" />
+            <circle cx="220" cy="700" r="4" fill="#5a4f45" />
+            
+            <!-- Lower right branch -->
+            <path class="tree-branch" d="M 405 700 Q 500 680, 580 650" id="branch2" />
+            <circle cx="580" cy="650" r="4" fill="#5a4f45" />
+            
+            <!-- Mid left branch -->
+            <path class="tree-branch" d="M 395 600 Q 320 580, 250 560" id="branch3" />
+            <circle cx="250" cy="560" r="4" fill="#5a4f45" />
+            
+            <!-- Mid right branch -->
+            <path class="tree-branch" d="M 405 550 Q 490 540, 560 520" id="branch4" />
+            <circle cx="560" cy="520" r="4" fill="#5a4f45" />
+            
+            <!-- Upper mid left -->
+            <path class="tree-branch" d="M 395 450 Q 330 440, 270 420" id="branch5" />
+            <circle cx="270" cy="420" r="4" fill="#5a4f45" />
+            
+            <!-- Upper mid right -->
+            <path class="tree-branch" d="M 405 400 Q 480 390, 540 370" id="branch6" />
+            <circle cx="540" cy="370" r="4" fill="#5a4f45" />
+            
+            <!-- High left -->
+            <path class="tree-branch" d="M 395 300 Q 340 290, 290 270" id="branch7" />
+            <circle cx="290" cy="270" r="4" fill="#5a4f45" />
+            
+            <!-- High right -->
+            <path class="tree-branch" d="M 405 250 Q 470 240, 520 220" id="branch8" />
+            <circle cx="520" cy="220" r="4" fill="#5a4f45" />
+            
+            <!-- Top left -->
+            <path class="tree-branch" d="M 395 180 Q 360 170, 320 150" id="branch9" />
+            <circle cx="320" cy="150" r="4" fill="#5a4f45" />
+            
+            <!-- Top right -->
+            <path class="tree-branch" d="M 405 150 Q 450 140, 490 120" id="branch10" />
+            <circle cx="490" cy="120" r="4" fill="#5a4f45" />
+            
+            <!-- Crown top -->
+            <path class="tree-branch" d="M 400 100 Q 390 70, 380 40" id="branch11" />
+            <circle cx="380" cy="40" r="4" fill="#5a4f45" />
+            
+            <!-- Extra mid branches for more spots -->
+            <path class="tree-branch" d="M 398 500 Q 350 495, 310 485" id="branch12" />
+            <circle cx="310" cy="485" r="4" fill="#5a4f45" />
+            
+            <path class="tree-branch" d="M 402 470 Q 460 465, 510 455" id="branch13" />
+            <circle cx="510" cy="455" r="4" fill="#5a4f45" />
+            
+            <path class="tree-branch" d="M 398 350 Q 340 345, 300 335" id="branch14" />
+            <circle cx="300" cy="335" r="4" fill="#5a4f45" />
+            
+            <path class="tree-branch" d="M 402 320 Q 470 315, 530 305" id="branch15" />
+            <circle cx="530" cy="305" r="4" fill="#5a4f45" />
+            
+            <!-- Leaf clusters for decoration -->
+            <circle class="leaf-cluster" cx="220" cy="690" r="25" style="animation-delay: 0s;" />
+            <circle class="leaf-cluster" cx="580" cy="640" r="28" style="animation-delay: 0.5s;" />
+            <circle class="leaf-cluster" cx="250" cy="550" r="22" style="animation-delay: 1s;" />
+            <circle class="leaf-cluster" cx="560" cy="510" r="26" style="animation-delay: 1.5s;" />
+            <circle class="leaf-cluster" cx="270" cy="410" r="24" style="animation-delay: 2s;" />
+            <circle class="leaf-cluster" cx="540" cy="360" r="27" style="animation-delay: 2.5s;" />
+            <circle class="leaf-cluster" cx="290" cy="260" r="23" style="animation-delay: 3s;" />
+            <circle class="leaf-cluster" cx="520" cy="210" r="25" style="animation-delay: 3.5s;" />
+            <circle class="leaf-cluster" cx="320" cy="140" r="20" style="animation-delay: 4s;" />
+            <circle class="leaf-cluster" cx="490" cy="110" r="22" style="animation-delay: 4.5s;" />
+            <circle class="leaf-cluster" cx="380" cy="30" r="18" style="animation-delay: 5s;" />
+            
+            <!-- Birds will be added here dynamically -->
+            <g id="birdsLayer"></g>
+        </svg>
+    </div>
+
+    <div class="status">
+        <div class="status-dot"></div>
+        <div class="status-text">Listening for birds...</div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" onclick="location.href='/'">← Grid View</button>
+        <button class="control-btn" onclick="location.href='/monitor'">📊 Monitor</button>
+    </div>
+
+    <div class="journal-sidebar">
+        <div class="journal-header">
+            <div class="journal-title">Soundscape</div>
+            <div class="journal-subtitle">Today's Visitors</div>
+            <div class="journal-count"><span id="birdCount">0</span> <span style="font-size: 0.5em; color: #6b7280;">species</span></div>
+        </div>
+
+        <div class="detection-list" id="detectionList">
+            <div class="empty-state">
+                <div class="empty-icon">🎵</div>
+                <div class="empty-text">Awaiting the chorus</div>
+                <div class="empty-hint">Birds will appear as they sing</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // CONFIGURATION
+        // ========================================
+        const BIRD_COLORS = {
+            'Blue Jay': '#4169e1',
+            'American Goldfinch': '#ffd700',
+            'Northern Cardinal': '#dc143c',
+            'American Robin': '#cd5c5c',
+            'Chickadee': '#708090',
+            'Song Sparrow': '#d2b48c',
+            'Red-bellied Woodpecker': '#cd5555',
+            'default': '#8b5cf6'
+        };
+
+        // Perch positions (x, y coordinates on the tree)
+        const PERCH_SPOTS = [
+            {x: 220, y: 700},
+            {x: 580, y: 650},
+            {x: 250, y: 560},
+            {x: 560, y: 520},
+            {x: 270, y: 420},
+            {x: 540, y: 370},
+            {x: 290, y: 270},
+            {x: 520, y: 220},
+            {x: 320, y: 150},
+            {x: 490, y: 120},
+            {x: 380, y: 40},
+            {x: 310, y: 485},
+            {x: 510, y: 455},
+            {x: 300, y: 335},
+            {x: 530, y: 305}
+        ];
+
+        let usedPerches = new Set();
+        let birdPerchMap = new Map(); // species -> perch index
+
+        // ========================================
+        // BIRD RENDERING
+        // ========================================
+        function getBirdColor(species) {
+            for (const [key, color] of Object.entries(BIRD_COLORS)) {
+                if (species.includes(key)) return color;
+            }
+            // Generate color from species name hash
+            let hash = 0;
+            for (let i = 0; i < species.length; i++) {
+                hash = species.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const hue = Math.abs(hash % 360);
+            return `hsl(${hue}, 70%, 60%)`;
+        }
+
+        function getAvailablePerch() {
+            for (let i = 0; i < PERCH_SPOTS.length; i++) {
+                if (!usedPerches.has(i)) {
+                    return i;
+                }
+            }
+            // If all perches taken, reuse a random one
+            return Math.floor(Math.random() * PERCH_SPOTS.length);
+        }
+
+        function createBirdOnTree(species, color) {
+            const perchIndex = getAvailablePerch();
+            usedPerches.add(perchIndex);
+            birdPerchMap.set(species, perchIndex);
+            
+            const perch = PERCH_SPOTS[perchIndex];
+            const birdsLayer = document.getElementById('birdsLayer');
+            
+            const birdGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            birdGroup.classList.add('bird-perch');
+            birdGroup.setAttribute('data-species', species);
+            
+            // Simple cute bird design
+            const birdBody = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            birdBody.classList.add('bird-body');
+            
+            // Body (oval)
+            const body = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+            body.setAttribute('cx', perch.x);
+            body.setAttribute('cy', perch.y - 15);
+            body.setAttribute('rx', '12');
+            body.setAttribute('ry', '15');
+            body.setAttribute('fill', color);
+            body.setAttribute('stroke', 'rgba(0,0,0,0.3)');
+            body.setAttribute('stroke-width', '1');
+            
+            // Head
+            const head = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            head.setAttribute('cx', perch.x);
+            head.setAttribute('cy', perch.y - 25);
+            head.setAttribute('r', '8');
+            head.setAttribute('fill', color);
+            head.setAttribute('stroke', 'rgba(0,0,0,0.3)');
+            head.setAttribute('stroke-width', '1');
+            
+            // Eye
+            const eye = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            eye.setAttribute('cx', perch.x + 3);
+            eye.setAttribute('cy', perch.y - 26);
+            eye.setAttribute('r', '2');
+            eye.setAttribute('fill', '#000');
+            
+            // Beak
+            const beak = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            beak.setAttribute('d', `M ${perch.x + 6} ${perch.y - 25} L ${perch.x + 12} ${perch.y - 25}`);
+            beak.setAttribute('stroke', '#ff8c00');
+            beak.setAttribute('stroke-width', '2');
+            beak.setAttribute('stroke-linecap', 'round');
+            
+            // Wing
+            const wing = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+            wing.setAttribute('cx', perch.x + 5);
+            wing.setAttribute('cy', perch.y - 14);
+            wing.setAttribute('rx', '7');
+            wing.setAttribute('ry', '10');
+            wing.setAttribute('fill', color);
+            wing.setAttribute('opacity', '0.7');
+            wing.setAttribute('transform', `rotate(20 ${perch.x + 5} ${perch.y - 14})`);
+            
+            // Tail
+            const tail = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            tail.setAttribute('d', `M ${perch.x - 10} ${perch.y - 10} Q ${perch.x - 15} ${perch.y - 5}, ${perch.x - 12} ${perch.y}`);
+            tail.setAttribute('stroke', color);
+            tail.setAttribute('stroke-width', '4');
+            tail.setAttribute('stroke-linecap', 'round');
+            tail.setAttribute('fill', 'none');
+            
+            // Legs
+            const leg1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            leg1.setAttribute('x1', perch.x - 3);
+            leg1.setAttribute('y1', perch.y - 2);
+            leg1.setAttribute('x2', perch.x - 3);
+            leg1.setAttribute('y2', perch.y + 2);
+            leg1.setAttribute('stroke', '#8b4513');
+            leg1.setAttribute('stroke-width', '1.5');
+            
+            const leg2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            leg2.setAttribute('x1', perch.x + 3);
+            leg2.setAttribute('y1', perch.y - 2);
+            leg2.setAttribute('x2', perch.x + 3);
+            leg2.setAttribute('y2', perch.y + 2);
+            leg2.setAttribute('stroke', '#8b4513');
+            leg2.setAttribute('stroke-width', '1.5');
+            
+            // Label (appears on hover)
+            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.classList.add('bird-label');
+            label.setAttribute('x', perch.x);
+            label.setAttribute('y', perch.y - 40);
+            label.textContent = species.split(' ').slice(0, 2).join(' '); // Truncate long names
+            
+            // Assemble
+            birdBody.appendChild(tail);
+            birdBody.appendChild(wing);
+            birdBody.appendChild(body);
+            birdBody.appendChild(head);
+            birdBody.appendChild(eye);
+            birdBody.appendChild(beak);
+            birdBody.appendChild(leg1);
+            birdBody.appendChild(leg2);
+            
+            birdGroup.appendChild(birdBody);
+            birdGroup.appendChild(label);
+            
+            birdsLayer.appendChild(birdGroup);
+        }
+
+        function createSoundwaveSVG(color) {
+            return `
+                <svg class="soundwave" viewBox="0 0 60 30">
+                    <rect x="2" y="10" width="4" height="10" fill="${color}" opacity="0.6" rx="2"/>
+                    <rect x="12" y="5" width="4" height="20" fill="${color}" opacity="0.7" rx="2"/>
+                    <rect x="22" y="8" width="4" height="14" fill="${color}" opacity="0.8" rx="2"/>
+                    <rect x="32" y="3" width="4" height="24" fill="${color}" opacity="0.9" rx="2"/>
+                    <rect x="42" y="7" width="4" height="16" fill="${color}" opacity="0.7" rx="2"/>
+                    <rect x="52" y="11" width="4" height="8" fill="${color}" opacity="0.6" rx="2"/>
+                </svg>
+            `;
+        }
+
+        // ========================================
+        // UI MANAGEMENT
+        // ========================================
+        let detectedBirds = new Set();
+
+        function addDetectionToUI(detection) {
+            const { species, scientific_name, confidence, timestamp, has_artwork, artwork_path } = detection;
+            
+            // Add to tree if new
+            if (!detectedBirds.has(species)) {
+                detectedBirds.add(species);
+                const color = getBirdColor(species);
+                createBirdOnTree(species, color);
+            }
+            
+            document.getElementById('birdCount').textContent = detectedBirds.size;
+
+            const list = document.getElementById('detectionList');
+            
+            // Remove empty state
+            const emptyState = list.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            const color = getBirdColor(species);
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            // Build image section
+            let imageHTML = '';
+            if (has_artwork && artwork_path) {
+                const imgFilename = artwork_path.split('/').pop();
+                imageHTML = `
+                    <div class="detection-image">
+                        <img src="/artwork/${imgFilename}" alt="${species}">
+                    </div>
+                `;
+            } else {
+                imageHTML = `
+                    <div class="detection-image no-image">
+                        🐦
+                    </div>
+                `;
+            }
+
+            const entry = document.createElement('div');
+            entry.className = 'detection-entry';
+            entry.innerHTML = `
+                ${imageHTML}
+                <div class="detection-content">
+                    <div class="bird-name">${species}</div>
+                    <div class="scientific-name">${scientific_name}</div>
+                    <div class="detection-meta">
+                        <div class="timestamp">
+                            <span>🕐</span>
+                            <span>${timeStr}</span>
+                        </div>
+                        <div class="confidence">${Math.round(confidence * 100)}%</div>
+                    </div>
+                    ${createSoundwaveSVG(color)}
+                </div>
+            `;
+
+            list.insertBefore(entry, list.firstChild);
+        }
+
+        // ========================================
+        // DATA SOURCE (Ready for WebSocket/SSE)
+        // ========================================
+        
+        // MODE 1: Real-time connection (uncomment when ready)
+        /*
+        function connectRealtime() {
+            const eventSource = new EventSource('/api/stream');
+            
+            eventSource.onmessage = (event) => {
+                const detection = JSON.parse(event.data);
+                addDetectionToUI(detection);
+            };
+
+            eventSource.onerror = () => {
+                console.error('Connection lost, reconnecting...');
+                setTimeout(connectRealtime, 5000);
+            };
+        }
+        connectRealtime();
+        */
+
+        // MODE 2: Polling (current implementation)
+        let knownBirds = new Map(); // species -> {timestamp, has_artwork}
+
+        async function pollForBirds() {
+            try {
+                const response = await fetch('/api/birds');
+                const birds = await response.json();
+
+                birds.forEach(bird => {
+                    const existing = knownBirds.get(bird.species);
+                    const currentArtwork = bird.has_artwork || false;
+                    
+                    // Add if new bird OR if artwork status changed
+                    if (!existing) {
+                        // New bird - add to tree and list
+                        knownBirds.set(bird.species, {
+                            timestamp: bird.timestamp,
+                            has_artwork: currentArtwork
+                        });
+                        addDetectionToUI({
+                            species: bird.species,
+                            scientific_name: bird.scientific_name,
+                            confidence: bird.confidence,
+                            timestamp: bird.timestamp,
+                            has_artwork: currentArtwork,
+                            artwork_path: bird.artwork_path || null
+                        });
+                    } else if (!existing.has_artwork && currentArtwork) {
+                        // Artwork just arrived - update entry
+                        existing.has_artwork = true;
+                        updateEntryImage(bird.species, bird.artwork_path);
+                    }
+                });
+            } catch (err) {
+                console.error('Polling error:', err);
+            }
+        }
+
+        function updateEntryImage(species, artworkPath) {
+            const entries = document.querySelectorAll('.detection-entry');
+            entries.forEach(entry => {
+                const nameEl = entry.querySelector('.bird-name');
+                if (nameEl && nameEl.textContent === species) {
+                    const imageDiv = entry.querySelector('.detection-image');
+                    if (imageDiv && artworkPath) {
+                        const imgFilename = artworkPath.split('/').pop();
+                        imageDiv.className = 'detection-image';
+                        imageDiv.innerHTML = `<img src="/artwork/${imgFilename}" alt="${species}">`;
+                    }
+                }
+            });
+        }
+
+        // Initial load + polling every 2 seconds for faster artwork updates
+        pollForBirds();
+        setInterval(pollForBirds, 2000);
+
+        // MODE 3: Mock data for testing (uncomment to demo)
+        /*
+        const mockBirds = [
+            { species: 'Blue Jay', scientific_name: 'Cyanocitta cristata', confidence: 0.94 },
+            { species: 'American Goldfinch', scientific_name: 'Spinus tristis', confidence: 0.87 },
+            { species: 'Northern Cardinal', scientific_name: 'Cardinalis cardinalis', confidence: 0.91 },
+            { species: 'American Robin', scientific_name: 'Turdus migratorius', confidence: 0.85 },
+            { species: 'Song Sparrow', scientific_name: 'Melospiza melodia', confidence: 0.78 }
+        ];
+
+        function generateMockDetection() {
+            const bird = mockBirds[Math.floor(Math.random() * mockBirds.length)];
+            addDetectionToUI({
+                ...bird,
+                timestamp: new Date().toISOString()
+            });
+            
+            const nextDelay = Math.random() * 5000 + 7000; // 7-12 seconds
+            setTimeout(generateMockDetection, nextDelay);
+        }
+
+        setTimeout(generateMockDetection, 2000);
+        */
+    </script>
+</body>
+</html>

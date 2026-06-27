@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birds Heard Today</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', serif;
+            background: #1a1410;
+            color: #e8dcc4;
+            overflow: hidden;
+        }
+        
+        .header {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            text-align: center;
+            pointer-events: auto;
+            background: rgba(26, 20, 16, 0.85);
+            padding: 12px 24px;
+            border-radius: 8px;
+            backdrop-filter: blur(8px);
+        }
+        
+        .header h1 {
+            font-size: 1.8em;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+        
+        .stats {
+            font-size: 0.9em;
+            color: #a89878;
+            font-style: italic;
+        }
+        
+        .reset-btn {
+            margin-top: 8px;
+            padding: 6px 16px;
+            background: #8b4513;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 0.85em;
+            transition: background 0.2s;
+        }
+        
+        .reset-btn:hover {
+            background: #a0522d;
+        }
+        
+        .carousel-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .carousel {
+            display: flex;
+            gap: 40px;
+            transition: transform 0.6s ease-out;
+            padding: 0 50vw;
+        }
+        
+        .painting {
+            flex-shrink: 0;
+            width: 600px;
+            background: #2a2218;
+            border: 20px solid #3d2f1f;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            position: relative;
+            transition: all 0.6s ease-out;
+        }
+        
+        .painting.center {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+        
+        .painting.side {
+            transform: scale(0.85);
+            opacity: 0.6;
+        }
+        
+        .painting.grey {
+            filter: grayscale(100%) brightness(0.4);
+        }
+        
+        .painting.detected {
+            filter: grayscale(0%) brightness(1);
+            animation: colorize 1.5s ease-out;
+        }
+        
+        @keyframes colorize {
+            0% { 
+                filter: grayscale(100%) brightness(0.4);
+            }
+            100% { 
+                filter: grayscale(0%) brightness(1);
+            }
+        }
+        
+        .painting-img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .painting-placeholder {
+            width: 100%;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5em;
+            background: #1a1410;
+        }
+        
+        .placard {
+            background: linear-gradient(to bottom, #e8dcc4, #d4c4a8);
+            padding: 20px;
+            text-align: center;
+            color: #2a2218;
+            border-top: 3px solid #8b7355;
+        }
+        
+        .bird-name {
+            font-size: 1.8em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .scientific-name {
+            font-size: 1.1em;
+            font-style: italic;
+            color: #5a4a3a;
+            margin-bottom: 12px;
+        }
+        
+        .bird-meta {
+            font-size: 0.95em;
+            color: #6a5a4a;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .confidence {
+            color: #4a9eff;
+            font-weight: 600;
+        }
+        
+        .nav-btn {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(26, 20, 16, 0.85);
+            border: 2px solid #8b7355;
+            color: #e8dcc4;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 2em;
+            cursor: pointer;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(139, 115, 85, 0.9);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .nav-btn.left {
+            left: 40px;
+        }
+        
+        .nav-btn.right {
+            right: 40px;
+        }
+        
+        .counter {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 20, 16, 0.85);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #a89878;
+            backdrop-filter: blur(8px);
+        }
+        
+        #pause-btn {
+            bottom: 100px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            top: auto !important;
+        }
+        
+        .reset-timer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(26, 20, 16, 0.85);
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: #a89878;
+            backdrop-filter: blur(8px);
+        }
+        
+        @media (max-width: 768px) {
+            .painting {
+                width: 80vw;
+            }
+            
+            .nav-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5em;
+            }
+            
+            .nav-btn.left {
+                left: 20px;
+            }
+            
+            .nav-btn.right {
+                right: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.3em;
+            }
+            
+            .bird-name {
+                font-size: 1.3em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>BIRDS HEARD TODAY</h1>
+        <div class="stats">
+            <span id="detected-count">0</span> of <span id="total-count">0</span> species detected
+        </div>
+        <button class="reset-btn" onclick="resetAll()">Reset All Data</button>
+    </div>
+    
+    <div class="carousel-container">
+        <div class="carousel" id="carousel"></div>
+    </div>
+    
+    <button class="nav-btn left" onclick="navigate(-1)">‹</button>
+    <button class="nav-btn right" onclick="navigate(1)">›</button>
+    
+    <button class="nav-btn" id="pause-btn" onclick="togglePause()" style="bottom: 100px; left: 50%; transform: translateX(-50%);">⏸</button>
+    
+    <div class="counter" id="counter">1 / 1</div>
+    
+    <div class="reset-timer" id="reset-timer">
+        Next reset: <span id="countdown">--:--:--</span>
+    </div>
+    
+    <script>
+        const RESET_HOUR = 3; // 3 AM
+        const AUTO_ADVANCE_INTERVAL = 6000; // 6 seconds per bird
+        
+        let allBirdsEverSeen = new Set();
+        let detectedToday = new Set();
+        let allArtwork = {};
+        let currentIndex = 0;
+        let birds = [];
+        let autoAdvanceTimer = null;
+        let isPaused = false;
+        
+        async function loadBirdData() {
+            try {
+                // Fetch today's detections
+                const response = await fetch('/api/birds');
+                const fetchedBirds = await response.json();
+                
+                // Fetch all artwork
+                const artworkResponse = await fetch('/api/artwork');
+                allArtwork = await artworkResponse.json();
+                
+                // Track all unique species from the API
+                fetchedBirds.forEach(bird => {
+                    allBirdsEverSeen.add(bird.species);
+                    detectedToday.add(bird.species);
+                });
+                
+                // Add all species that have artwork
+                Object.keys(allArtwork).forEach(species => {
+                    allBirdsEverSeen.add(species);
+                });
+                
+                // Load persisted all-time species list
+                const stored = localStorage.getItem('allBirdsEverSeen');
+                if (stored) {
+                    JSON.parse(stored).forEach(s => allBirdsEverSeen.add(s));
+                }
+                
+                // Save updated all-time list
+                localStorage.setItem('allBirdsEverSeen', JSON.stringify([...allBirdsEverSeen]));
+                
+                // Build bird list with all metadata
+                birds = [...allBirdsEverSeen].sort().map(species => {
+                    const birdData = fetchedBirds.find(b => b.species === species);
+                    const artworkData = allArtwork[species];
+                    
+                    return {
+                        species: species,
+                        scientific_name: birdData?.scientific_name || species,
+                        last_heard: birdData?.last_heard || 'Not today',
+                        confidence: birdData?.confidence || 0,
+                        has_artwork: !!artworkData,
+                        artwork_path: artworkData?.image_path,
+                        detected_today: !!birdData
+                    };
+                });
+                
+                renderCarousel();
+                updateStats();
+                startAutoAdvance(); // Start auto-scrolling after data loads
+            } catch (error) {
+                console.error('Failed to load bird data:', error);
+            }
+        }
+        
+        function renderCarousel() {
+            const carousel = document.getElementById('carousel');
+            carousel.innerHTML = '';
+            
+            if (birds.length === 0) {
+                carousel.innerHTML = '<div class="painting"><div class="painting-placeholder">🐦</div><div class="placard"><div class="bird-name">No Birds Yet</div><div class="scientific-name">Play bird sounds near the microphone</div></div></div>';
+                return;
+            }
+            
+            birds.forEach((bird, idx) => {
+                const painting = document.createElement('div');
+                painting.className = 'painting';
+                painting.dataset.index = idx;
+                
+                if (bird.detected_today && bird.has_artwork) {
+                    painting.classList.add('detected');
+                } else if (!bird.detected_today) {
+                    painting.classList.add('grey');
+                }
+                
+                let imageHtml = '';
+                if (bird.has_artwork) {
+                    imageHtml = `<img class="painting-img" src="/artwork/${bird.artwork_path.split('/').pop()}" alt="${bird.species}">`;
+                } else if (bird.detected_today) {
+                    imageHtml = '<div class="painting-placeholder">⏳</div>';
+                } else {
+                    imageHtml = '<div class="painting-placeholder">🐦</div>';
+                }
+                
+                painting.innerHTML = `
+                    ${imageHtml}
+                    <div class="placard">
+                        <div class="bird-name">${bird.species}</div>
+                        <div class="scientific-name">${bird.scientific_name}</div>
+                        <div class="bird-meta">
+                            <span class="last-heard">${bird.last_heard}</span>
+                            ${bird.confidence > 0 ? `<span class="confidence">${Math.round(bird.confidence * 100)}% confidence</span>` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                carousel.appendChild(painting);
+            });
+            
+            updateCarousel();
+        }
+        
+        function navigate(direction) {
+            currentIndex = (currentIndex + direction + birds.length) % birds.length;
+            updateCarousel();
+            resetAutoAdvance(); // Reset timer on manual navigation
+        }
+        
+        function autoAdvance() {
+            if (!isPaused && birds.length > 0) {
+                currentIndex = (currentIndex + 1) % birds.length;
+                updateCarousel();
+            }
+        }
+        
+        function startAutoAdvance() {
+            stopAutoAdvance();
+            autoAdvanceTimer = setInterval(autoAdvance, AUTO_ADVANCE_INTERVAL);
+        }
+        
+        function stopAutoAdvance() {
+            if (autoAdvanceTimer) {
+                clearInterval(autoAdvanceTimer);
+                autoAdvanceTimer = null;
+            }
+        }
+        
+        function resetAutoAdvance() {
+            startAutoAdvance();
+        }
+        
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pause-btn').textContent = isPaused ? '▶' : '⏸';
+        }
+        
+        function updateCarousel() {
+            const carousel = document.getElementById('carousel');
+            const paintings = carousel.querySelectorAll('.painting');
+            
+            // Remove all side/center classes
+            paintings.forEach(p => {
+                p.classList.remove('center', 'side');
+            });
+            
+            // Add center to current
+            if (paintings[currentIndex]) {
+                paintings[currentIndex].classList.add('center');
+                
+                // Add side class to adjacent
+                const prevIndex = (currentIndex - 1 + birds.length) % birds.length;
+                const nextIndex = (currentIndex + 1) % birds.length;
+                
+                if (paintings[prevIndex]) paintings[prevIndex].classList.add('side');
+                if (paintings[nextIndex]) paintings[nextIndex].classList.add('side');
+            }
+            
+            // Calculate offset to center current painting
+            const offset = currentIndex * -640; // 600px width + 40px gap
+            carousel.style.transform = `translateX(${offset}px)`;
+            
+            // Update counter
+            document.getElementById('counter').textContent = `${currentIndex + 1} / ${birds.length}`;
+        }
+        
+        function updateStats() {
+            document.getElementById('detected-count').textContent = detectedToday.size;
+            document.getElementById('total-count').textContent = allBirdsEverSeen.size;
+        }
+        
+        function updateCountdown() {
+            const now = new Date();
+            const next3am = new Date(now);
+            next3am.setHours(RESET_HOUR, 0, 0, 0);
+            
+            if (now.getHours() >= RESET_HOUR) {
+                next3am.setDate(next3am.getDate() + 1);
+            }
+            
+            const diff = next3am - now;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            document.getElementById('countdown').textContent = 
+                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        
+        function checkForReset() {
+            const lastReset = localStorage.getItem('lastReset');
+            const now = new Date();
+            const todayReset = new Date(now);
+            todayReset.setHours(RESET_HOUR, 0, 0, 0);
+            
+            // If we've passed 3am since last reset, clear detected birds
+            if (!lastReset || new Date(lastReset) < todayReset && now >= todayReset) {
+                console.log('Resetting daily detections...');
+                detectedToday.clear();
+                localStorage.setItem('lastReset', now.toISOString());
+            }
+        }
+        
+        async function resetAll() {
+            if (!confirm('Reset all bird data? This will clear the entire history.')) {
+                return;
+            }
+            
+            try {
+                // Call server reset endpoint
+                const response = await fetch('/api/reset', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Clear localStorage
+                    localStorage.removeItem('allBirdsEverSeen');
+                    localStorage.removeItem('lastReset');
+                    
+                    // Clear memory
+                    allBirdsEverSeen.clear();
+                    detectedToday.clear();
+                    birds = [];
+                    currentIndex = 0;
+                    
+                    // Re-render
+                    renderCarousel();
+                    updateStats();
+                    
+                    alert('All data reset. Only new detections will appear.');
+                } else {
+                    alert('Reset failed: ' + result.message);
+                }
+            } catch (error) {
+                alert('Reset failed: ' + error.message);
+            }
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') navigate(-1);
+            if (e.key === 'ArrowRight') navigate(1);
+            if (e.key === ' ') {
+                e.preventDefault();
+                togglePause();
+            }
+        });
+        
+        // Pause on hover over carousel
+        document.querySelector('.carousel-container').addEventListener('mouseenter', () => {
+            isPaused = true;
+        });
+        
+        document.querySelector('.carousel-container').addEventListener('mouseleave', () => {
+            isPaused = false;
+        });
+        
+        // Initial load
+        checkForReset();
+        loadBirdData();
+        updateCountdown();
+        
+        // Refresh data every 30 seconds
+        setInterval(loadBirdData, 30000);
+        
+        // Update countdown every second
+        setInterval(updateCountdown, 1000);
+        
+        // Check for reset every minute
+        setInterval(checkForReset, 60000);
+    </script>
+</body>
+</html>

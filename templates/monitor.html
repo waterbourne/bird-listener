@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bird Listener Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #0f0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #0f0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .panel {
+            background: #1a1a1a;
+            border: 2px solid #0f0;
+            padding: 20px;
+            border-radius: 4px;
+        }
+        
+        .panel h2 {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: #0f0;
+            text-transform: uppercase;
+        }
+        
+        .audio-meter {
+            height: 40px;
+            background: #000;
+            border: 1px solid #0f0;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .audio-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #0f0 0%, #ff0 70%, #f00 100%);
+            width: 0%;
+            transition: width 0.1s ease-out;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .stat {
+            background: #000;
+            padding: 10px;
+            border: 1px solid #0f0;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            color: #0a0;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            color: #0f0;
+            font-weight: bold;
+        }
+        
+        .detections-list {
+            background: #000;
+            border: 1px solid #0f0;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .detection {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-left: 3px solid #0f0;
+            background: #0a0a0a;
+            font-size: 0.9em;
+        }
+        
+        .detection.filtered {
+            border-left-color: #666;
+            opacity: 0.5;
+        }
+        
+        .detection.new {
+            animation: flash 0.5s;
+        }
+        
+        @keyframes flash {
+            0%, 100% { background: #0a0a0a; }
+            50% { background: #1a3a1a; }
+        }
+        
+        .detection-time {
+            color: #0a0;
+            font-size: 0.85em;
+        }
+        
+        .detection-species {
+            color: #0f0;
+            font-weight: bold;
+            margin: 3px 0;
+        }
+        
+        .detection.filtered .detection-species {
+            color: #666;
+        }
+        
+        .detection-scientific {
+            color: #0a0;
+            font-style: italic;
+            font-size: 0.85em;
+        }
+        
+        .detection-confidence {
+            color: #ff0;
+            font-size: 0.85em;
+        }
+        
+        .detection-status {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 0.7em;
+            margin-left: 10px;
+            border-radius: 2px;
+        }
+        
+        .status-displayed {
+            background: #0f0;
+            color: #000;
+        }
+        
+        .status-filtered {
+            background: #666;
+            color: #ddd;
+        }
+        
+        .audio-status {
+            padding: 10px;
+            background: #000;
+            border: 1px solid #0f0;
+            margin-bottom: 10px;
+        }
+        
+        .status-active {
+            color: #0f0;
+        }
+        
+        .status-inactive {
+            color: #f00;
+        }
+        
+        .link {
+            display: inline-block;
+            margin-top: 15px;
+            color: #0f0;
+            text-decoration: none;
+            border: 1px solid #0f0;
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+        
+        .link:hover {
+            background: #0f0;
+            color: #000;
+        }
+        
+        .chunk-info {
+            font-size: 0.85em;
+            color: #0a0;
+            margin-top: 10px;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Bird Listener System Monitor</h1>
+        
+        <div class="grid">
+            <div class="panel">
+                <h2>Audio Input</h2>
+                <div class="audio-status">
+                    <span id="audio-status" class="status-inactive">● Checking audio input...</span>
+                </div>
+                <div class="audio-meter">
+                    <div class="audio-bar" id="audio-bar"></div>
+                </div>
+                <div class="chunk-info">
+                    Analyzing 3-second chunks via BirdNET<br>
+                    Blue Yeti USB Microphone → localhost:5555
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>Statistics</h2>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-label">Total Detections</div>
+                        <div class="stat-value" id="total-count">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Displayed (Birds)</div>
+                        <div class="stat-value" id="displayed-count">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Filtered Out</div>
+                        <div class="stat-value" id="filtered-count">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Last Detection</div>
+                        <div class="stat-value" id="last-detection">--:--:--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>Live Detection Feed (Last 50)</h2>
+            <div class="detections-list" id="detections-list">
+                <div style="color: #0a0; text-align: center; padding: 20px;">
+                    Loading detections...
+                </div>
+            </div>
+        </div>
+        
+        <a href="/" class="link">← Back to Gallery</a>
+    </div>
+    
+    <script>
+        let lastDetectionId = null;
+        let audioChunksCount = 0;
+        
+        async function loadDetections() {
+            try {
+                const response = await fetch('/api/detections/raw');
+                const detections = await response.json();
+                
+                const list = document.getElementById('detections-list');
+                
+                if (detections.length === 0) {
+                    list.innerHTML = '<div style="color: #0a0; text-align: center; padding: 20px;">No detections yet. Play bird sounds near the microphone.</div>';
+                    return;
+                }
+                
+                // Check for new detections
+                const newestId = detections[0]?.timestamp + detections[0]?.species;
+                const hasNew = lastDetectionId && newestId !== lastDetectionId;
+                lastDetectionId = newestId;
+                
+                // Clear and rebuild list
+                list.innerHTML = '';
+                
+                let displayedCount = 0;
+                let filteredCount = 0;
+                
+                detections.forEach((det, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'detection';
+                    
+                    if (det.filtered) {
+                        div.classList.add('filtered');
+                        filteredCount++;
+                    } else {
+                        displayedCount++;
+                    }
+                    
+                    if (idx === 0 && hasNew) {
+                        div.classList.add('new');
+                    }
+                    
+                    const status = det.filtered ? 
+                        '<span class="detection-status status-filtered">FILTERED</span>' :
+                        '<span class="detection-status status-displayed">DISPLAYED</span>';
+                    
+                    div.innerHTML = `
+                        <div class="detection-time">${det.timestamp} ${status}</div>
+                        <div class="detection-species">${det.species}</div>
+                        <div class="detection-scientific">${det.scientific_name}</div>
+                        <div class="detection-confidence">Confidence: ${Math.round(det.confidence * 100)}%</div>
+                    `;
+                    
+                    list.appendChild(div);
+                });
+                
+                // Update stats
+                document.getElementById('total-count').textContent = detections.length;
+                document.getElementById('displayed-count').textContent = displayedCount;
+                document.getElementById('filtered-count').textContent = filteredCount;
+                document.getElementById('last-detection').textContent = detections[0]?.timestamp || '--:--:--';
+                
+                // Update audio status based on recent activity
+                const lastTime = detections[0]?.timestamp;
+                if (lastTime) {
+                    document.getElementById('audio-status').innerHTML = '<span class="status-active">● Audio input active</span>';
+                }
+                
+            } catch (error) {
+                console.error('Failed to load detections:', error);
+            }
+        }
+        
+        // Simulate audio meter (since we can't access actual mic without permissions)
+        function simulateAudioMeter() {
+            const bar = document.getElementById('audio-bar');
+            
+            // Check for audio chunk files as proxy for activity
+            fetch('/api/detections/raw')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        // Simulate activity based on recent detection
+                        const level = 20 + Math.random() * 30;
+                        bar.style.width = level + '%';
+                        
+                        setTimeout(() => {
+                            bar.style.width = '5%';
+                        }, 200);
+                    }
+                });
+        }
+        
+        // Initial load
+        loadDetections();
+        
+        // Refresh every 2 seconds
+        setInterval(loadDetections, 2000);
+        
+        // Audio meter animation every 500ms
+        setInterval(simulateAudioMeter, 500);
+    </script>
+</body>
+</html>

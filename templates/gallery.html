@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birds Heard Today</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', serif;
+            background: #1a1410;
+            color: #e8dcc4;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(26, 20, 16, 0.85);
+            border-radius: 8px;
+            backdrop-filter: blur(8px);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+        
+        .stats {
+            font-size: 1.2em;
+            color: #a89878;
+            font-style: italic;
+            margin-top: 15px;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #8b4513;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 0.95em;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background: #a0522d;
+        }
+        
+        .btn-secondary {
+            background: #5a4a3a;
+        }
+        
+        .btn-secondary:hover {
+            background: #6a5a4a;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .bird-card {
+            background: #2a2218;
+            border: 15px solid #3d2f1f;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+            transition: transform 0.3s ease;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .bird-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .bird-image {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            display: block;
+            background: #1a1410;
+        }
+        
+        .bird-placeholder {
+            width: 100%;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5em;
+            background: linear-gradient(135deg, #2a2218 0%, #1a1410 100%);
+            position: relative;
+        }
+        
+        .generating {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.2em;
+            color: #a89878;
+            font-family: 'Georgia', serif;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .bird-info {
+            background: linear-gradient(to bottom, #e8dcc4, #d4c4a8);
+            padding: 20px;
+            color: #2a2218;
+        }
+        
+        .bird-name {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        .scientific-name {
+            font-size: 0.95em;
+            font-style: italic;
+            color: #5a4a3a;
+            margin-bottom: 12px;
+        }
+        
+        .bird-meta {
+            font-size: 0.9em;
+            color: #6a5a4a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .confidence {
+            color: #4a9eff;
+            font-weight: 600;
+        }
+        
+        .time {
+            color: #8b7355;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #a89878;
+        }
+        
+        .empty-state .icon {
+            font-size: 6em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: #8b7355;
+        }
+        
+        .empty-state p {
+            font-size: 1.1em;
+            font-style: italic;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #6a5a4a;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .bird-name {
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>BIRDS HEARD TODAY</h1>
+            <div class="stats">
+                <span id="bird-count">0</span> species detected
+            </div>
+            <div class="controls">
+                <a href="/monitor" class="btn btn-secondary">📊 Monitor</a>
+                <button class="btn" onclick="resetData()">🔄 Reset All Data</button>
+            </div>
+        </div>
+        
+        <div class="grid" id="bird-grid">
+            <div class="empty-state">
+                <div class="icon">🐦</div>
+                <h2>No Birds Yet</h2>
+                <p>Play bird sounds near the microphone</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            Auto-updates every 5 seconds
+        </div>
+    </div>
+    
+    <script>
+        let currentBirds = new Set();
+        
+        async function loadBirds() {
+            try {
+                const response = await fetch('/api/birds');
+                const birds = await response.json();
+                
+                const artworkResponse = await fetch('/api/artwork');
+                const artwork = await artworkResponse.json();
+                
+                document.getElementById('bird-count').textContent = birds.length;
+                
+                const grid = document.getElementById('bird-grid');
+                
+                if (birds.length === 0) {
+                    grid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">🐦</div>
+                            <h2>No Birds Yet</h2>
+                            <p>Play bird sounds near the microphone</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Check for new birds
+                const newBirds = birds.filter(b => !currentBirds.has(b.species));
+                
+                if (newBirds.length > 0 || currentBirds.size === 0) {
+                    // Clear and rebuild
+                    grid.innerHTML = '';
+                    currentBirds.clear();
+                    
+                    // Sort by most recent first
+                    birds.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    
+                    birds.forEach(bird => {
+                        currentBirds.add(bird.species);
+                        
+                        const card = document.createElement('div');
+                        card.className = 'bird-card';
+                        
+                        const hasArtwork = artwork[bird.species];
+                        
+                        let imageHtml = '';
+                        if (hasArtwork) {
+                            const imgPath = hasArtwork.image_path.split('/').pop();
+                            imageHtml = `<img class="bird-image" src="/artwork/${imgPath}" alt="${bird.species}">`;
+                        } else {
+                            imageHtml = `
+                                <div class="bird-placeholder">
+                                    🎨
+                                    <div class="generating">Generating artwork...</div>
+                                </div>
+                            `;
+                        }
+                        
+                        card.innerHTML = `
+                            ${imageHtml}
+                            <div class="bird-info">
+                                <div class="bird-name">${bird.species}</div>
+                                <div class="scientific-name">${bird.scientific_name}</div>
+                                <div class="bird-meta">
+                                    <span class="time">🕐 ${bird.last_heard}</span>
+                                    <span class="confidence">${Math.round(bird.confidence * 100)}%</span>
+                                </div>
+                            </div>
+                        `;
+                        
+                        grid.appendChild(card);
+                    });
+                } else {
+                    // Just update artwork for existing cards
+                    birds.forEach(bird => {
+                        const hasArtwork = artwork[bird.species];
+                        if (hasArtwork) {
+                            // Find the card and update if it has placeholder
+                            const cards = grid.querySelectorAll('.bird-card');
+                            cards.forEach(card => {
+                                const nameElem = card.querySelector('.bird-name');
+                                if (nameElem && nameElem.textContent === bird.species) {
+                                    const placeholder = card.querySelector('.bird-placeholder');
+                                    if (placeholder) {
+                                        const imgPath = hasArtwork.image_path.split('/').pop();
+                                        placeholder.outerHTML = `<img class="bird-image" src="/artwork/${imgPath}" alt="${bird.species}">`;
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Failed to load birds:', error);
+            }
+        }
+        
+        async function resetData() {
+            if (!confirm('Reset all bird data? This will clear the entire history.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/reset', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    currentBirds.clear();
+                    await loadBirds();
+                    alert('All data reset. Only new detections will appear.');
+                } else {
+                    alert('Reset failed: ' + result.message);
+                }
+            } catch (error) {
+                alert('Reset failed: ' + error.message);
+            }
+        }
+        
+        // Initial load
+        loadBirds();
+        
+        // Refresh every 5 seconds
+        setInterval(loadBirds, 5000);
+    </script>
+</body>
+</html>
